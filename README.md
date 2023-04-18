@@ -138,7 +138,8 @@ sc.partial_fit(train_scaled, train_target)
 트리를 통한 머신러닝 문제 해결 방식을 학습했다.
 ## 결정트리 (Ch 05-1)
 ### 기본 코드
-1.  모델   `max_depth` 가지치기
+1.  모델  
+  (`max_depth` 가지치기)
 ```
 from sklearn.tree import DecisionTreeClassifier
 dt = DecisionTreeClassifier(max_depth=3)
