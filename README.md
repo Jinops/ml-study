@@ -125,7 +125,7 @@ $R^2 = 1 - \frac{(타깃-예측)^2}{(타깃-평균)^2}$ 수식을 보면, 예측
 (`loss` 손실함수, `max_iter` 에포크, `tol` early stop 최소 개선치)
 ```
 from sklearn.linear_model import SGDClassifier
-sc = SGDClassifier(loss='log', max_iter=10, tol=None, random_state=42)
+sc = SGDClassifier(loss='log', max_iter=10, tol=None)
 ```
 
 2. 모델 피팅
@@ -134,4 +134,39 @@ sc.fit(train_scaled, train_target)
 # 기존 모델에 점진적(추가) 학습하기
 sc.partial_fit(train_scaled, train_target)
 ```
+# Week 05: 트리 알고리즘 <sup>```~04.18```</sup> 
+트리를 통한 머신러닝 문제 해결 방식을 학습했다.
+## 결정트리 (Ch 05-1)
+### 기본 코드
+1.  모델   `max_depth` 가지치기
+```
+from sklearn.tree import DecisionTreeClassifier
+dt = DecisionTreeClassifier(max_depth=3)
+dt.fit(train_scaled, train_target)
+```
+> 결정 트리는 특성값의 스케일에 영향을 받지 않기 때문에, 데이터 표준화를 할 필요가 없다.
+2. 트리 그리기
+```
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
+plt.figure(figsize=(10,7))
+plot_tree(dt, max_depth=2, filled=True, feature_names=['alcohol', 'sugar', 'pH'])
+plt.show()
+```
+### 알고리즘
+1. 불순도에 따라 조건을 만들어 좌(True), 우(False)로 샘플을 나눠 나간다
+2. 부모 노드와 자식 노드의 <b>불순도 차이</b>(=<b>정보 이득</b>)를 최대화하도록 트리를 확장시킨다.
+3. 최종 노드(리프 노드)에서 더 많이 분류된 클래스를 예측 클래스로 한다.
+
+### Gini 불순도
+1. $gini = 1 - (False 클래스 비율^2 + True 클래스 비율^2)$
+2. DecisionTreeClassifer의 데이터 분할 기준(`criterion`) 기본값
+
+### 엔트로피 불순도
+1. $entropy = -False 클래스 비율 * log_2(Flase 클래스 비율) - True 클래스 비율 * log_2(True 클래스 비율)$
+2. `criterion='entropy'`로 지정
+### 특성 중요도
+1. 결정 트리에 사용된 특성이 불순도를 감소하는데 기여한 정도
+2. 최상위 노드(루트 노드)와 얕은 깊이의 노드의 특성을 보거나, `.feature_importances_`로 중요도를 확인할 수 있다.
+3. 이를 이용해, 결정 트리를 특성 선택에 활용할 수 있다.
 
