@@ -171,3 +171,62 @@ plt.show()
 2. 최상위 노드(루트 노드)와 얕은 깊이의 노드의 특성을 보거나, `.feature_importances_`로 중요도를 확인할 수 있다.
 3. 이를 이용해, 결정 트리를 특성 선택에 활용할 수 있다.
 
+
+## 교차 검증과 그리드 처치 (ch 05-2) <sup>```Week 03```</sup> 
+### 검증(Validation)
+1. 훈련 데이터에서 또다시 몇 %의 비중을 분리하여, 테스트 데이터 이전에 사용하는 것
+2. 하이퍼파라미터 튜닝 등의 절차 뒤 사용하여, 테스트 데이터의 사용을 최소화
+
+### 교차 검증(Cross Validation)
+1. validation 세트를 다른 위치로 여러번 나눠, 이 평균을 최종 점수로 하는 것
+2. 이를 통해 최적의 하이퍼파라미터를 찾으면, 전체 train 세트로 모델을 다시 생성하여 적용
+3. k-fold 교차검증: 훈련 세트를 k부분으로 나눠 교차검증 하는 것
+4. `cross_validate(모델, train_input, train_target)`로 반환되는 dictionary의 ‘test_score’에 각 검증 결과가 배열로 있음
+5. 위 과정 전 데이터를 섞고 싶다면, 아래와 같은 분할기를 선언 후 `cv=`에 파라미터로 전달
+```
+from sklearn.model_selection import StratifiedKFold
+splitter = StratifiedKFold(n_splits=10, shuffle=True)
+```
+
+### 그리드 서치 (Grid Search)
+1. 하이퍼파라미터의 탐색 및 교차 검증을 수행하는 기능
+2. 아래 코드를 통해, 최적의 하이퍼파라미터를 찾아 모델에 적용 가능  
+`params` 파라미터 후보
+```
+from sklearn.model_selection import GridSearchCV
+params = {'min_impurity_decrease': [0.0001, 0.0002, 0.0003, 0.0004, 0.0005]}
+gs = GridSearchCV(DecisionTreeClassifier(), params, n_jobs=-1)
+gs.fit(train_input, train_target)
+
+dt = gs.best_estimator_
+print('params: ', gs.best_params_)
+print('score: ', dt.score(train_input, train_target))
+print('best validation score: ', np.max(gs.cv_results_['mean_test_score']))
+
+
+```
+
+### 랜덤 서치 (Random Search)
+1. 하이퍼파라미터를, 확률분포에 따라 랜덤으로 설정하는 것
+2. 다음과 같이 사용 가능
+```
+from scipy.stats import uniform, randint
+params = {'min_impurity_decrease': uniform(0.0001, 0.001),
+          'max_depth': randint(20, 50),
+          'min_samples_split': randint(2,25),
+          'min_samples_leaf': range(1,25), # not random
+          }
+
+from sklearn.model_selection import RandomizedSearchCV
+gs = RandomizedSearchCV(DecisionTreeClassifier(), params, n_iter=100, n_jobs=-1)
+gs.fit(train_input, train_target)
+
+dt = gs.best_estimator_
+```
+```
+print('params: ', gs.best_params_)
+print('train score: ', dt.score(train_input, train_target))
+print('validation score: ', gs.cv_results_['mean_test_score'])
+print('test score: ', dt.score(test_input, test_target))
+
+```
