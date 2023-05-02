@@ -230,3 +230,68 @@ print('validation score: ', gs.cv_results_['mean_test_score'])
 print('test score: ', dt.score(test_input, test_target))
 
 ```
+
+
+## 트리의 앙상블 (ch 05-3) <sup>```Week 04```</sup> 
+### 랜덤 포레스트 (Random Forest)
+1. 랜덤하게 만든 decision tree의 앙상블
+2. train 데이터를 샘플링함
+3. 노드 분할 시, 분류에서는 특성 개수의 제곱근 만큼 <b>특성을 선택</b>하고, 회귀에서는 특성 전체를 사용
+4. 다음과 같이 정의 
+```
+from sklearn.ensemble import RandomForestClassifier
+rf = RandomForestClassifier()
+```
+
+### 부트스트랩
+1. 데이터 중복을 혀용하는 샘플링 기법
+2. 최종적으로 총 샘플의 개수 = train 데이터 개수
+3. OOB<sup>out of bag</sup> 샘플(사용되지 않은 (남는) 샘플)을 validation 세트로 사용 가능
+```
+rf = RandomForestClassifier(oob_score=True, n_jobs=-1)
+rf.fit(train_input, train_target)
+print(rf.oob_score_)
+```
+
+### 엑스트라 트리
+1. 부트스트랩 샘플을 사용하지 않고, 전체 훈련 세트를 사용하는 decision tree의 앙상블
+2. 노드 분할 시 특성을 무작위로 분할함. 이에 따라 성능은 낮으나 속도는 빠름
+3. 다음과 같이 정의
+```
+from sklearn.ensemble import ExtraTreesClassifier
+et = ExtraTreesClassifier(n_jobs=-1, random_state=42)
+```
+
+### 그라디언트 부스팅
+1. 깊이가 얕은 결정 트리를 이용하여, 이진 트리의 오차를 보완하는 방식으로 앙상블
+2. 깊이가 얕아 트리가 많아도 과적합에 강하고, 높은 일반화 성능
+3. 경사 하강법에 의해 트리를 추가하며 cost가 낮은 곳으로 이동
+4. 다음과 같이 정의  
+`n_estimators` 트리 개수, `learning_rate` 학습률(속도)
+```
+from sklearn.ensemble import GradientBoostingClassifier
+gb = GradientBoostingClassifier(n_estimators=500, learning_rate=0.2)
+gb.fit(train_input, train_target)
+```
+5. 병렬 처리(`n_jobs`)가 불가
+
+### 히스토그램 기반 그라디언트 부스팅
+1. 훈련 데이터(특성)을 256개(1개는 누락 값을 위해)의 구간으로 미리 나누어 최적 분할을 찾기 빠름
+2. 그라디언트 부스팅보다 다양한 특성을 골고루 평가
+3. 다음과 같이 정의  
+`max_iter` 부스팅 반복 횟수 (`n_estimators`  대신 사용)
+```
+from sklearn.ensemble import HistGradientBoostingClassifier
+hgb = HistGradientBoostingClassifier()
+```
+4. 다른 라이브러리에서도 구현 가능
+- <b>XGBoost</b>
+```
+from xgboost import XGBClassifier
+xgb = XGBClassifier(tree_method='hist')
+```
+- <b>LightGBM</b>
+```
+from lightgbm import LGBMClassifier
+lgb = LGBMClassifier()
+```
