@@ -293,3 +293,18 @@ xgb = XGBClassifier(tree_method='hist')
 from lightgbm import LGBMClassifier
 lgb = LGBMClassifier()
 ```
+
+# Week 05: 비지도 학습
+
+## 군집 알고리즘 (ch 06-1) <sup>```Week 05```</sup> 
+### 비지도 학습
+1. 타깃(y값)을 모를 때 (없을 때) 학습을 하는 알고리즘
+
+### 군집 (Clustering)
+1. 비슷한 샘플끼리 그룹으로 모으는 작업
+2. 클러스터: 이를 통해 만들어진 그룹
+
+> 흑백의 이미지(흰색 배경)를 numpy 배열로 변환할 경우, 값이 반전된다.  
+흰색(255)보다 검정색(0)이 찾고자 하는 물체에 가깝기 때문에, 반전을 통해 더 큰 값으로 만들어준다.
+
+> numpy에서 axis는 0:세로(행), 1:가로(열) 이다.
