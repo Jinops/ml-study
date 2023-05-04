@@ -365,7 +365,7 @@ print(km.labels_)
 5. 원본 특성의 개수만큼 반복 가능하나, 일반적으로 주성분의 개수가 더 적음
 
 5. PCA 클래스를 통해 다음과 같이 정의 가능  
-`n_components=` 차원 or 설명된 분산 비율, `.transform` 차원 축소, `.transform` 복원
+`n_components=` 차원 or 설명된 분산 비율, `.transform` 차원 축소, `.inverse_transform` 복원
 ```
 from sklearn.decomposition import PCA
 pca = PCA(n_components=50)
