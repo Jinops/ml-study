@@ -379,7 +379,7 @@ fruits_inverse = pca.inverse_transform(fruits_pca)
 2. 이를 그래프로 그려, 적절한 주성분 개수를 정할 수 있음
 3. PCA 클래스의 `.explained_variance_ratio_`로 확인
 
-
+---
 # 딥러닝 (Ch 07) 
 ## 인공 신경망 (Ch 07-1) <sup>```Week 06```</sup> 
 ### 인공 신경망
@@ -527,3 +527,14 @@ plt.show()
 2. 과적합 또한 막아주기 때문에, 일종의 규제
 3. 다음과 같이 사용 `cb = keras.callbacks.EarlyStopping(patience=2, restore_best_weights=True)`
 
+### 모델 저장
+1. 다음 코드로 모델을 저장
+```
+model.save_weights('model-weights.h5') # 파라미터
+model.save('model-whole.h5') #파라미터, 모델 구조
+```
+2. 다음 코드로 모델 또는 파라미터 불러오기
+```
+model.load_weight('model-weights.h5') # 이미 만들어진 모델에 파라미터 불러오기 
+model = keras.models.load_model('model-whole.h5') # 새 모델
+```
