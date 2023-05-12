@@ -5,6 +5,7 @@
 |3|~04/18|트리|트리를 통한 머신러닝 문제 해결 방식을 학습했다.|
 |4|~05/02|앙상블, validation|트리 기반의 앙상블 모형을 학습하고, validation 세트의 의미와 활용에 대해 학습했다.|
 |5|~05/04|비지도 학습|target이 없이 학습을 하는 비지도 학습과 차원축소를 학습했다.|
+|6|~05/12|신경망|딥러닝과 심층 신경망 모델을 만드는 방법에 대해 학습했다.|
 
 # 회귀 (Ch 03)
 ## k-최근접 회귀 (Ch 03-1) <sup>```Week 01```</sup> 
@@ -377,3 +378,152 @@ fruits_inverse = pca.inverse_transform(fruits_pca)
 1. 각 주성분의 설명된 분산 비율
 2. 이를 그래프로 그려, 적절한 주성분 개수를 정할 수 있음
 3. PCA 클래스의 `.explained_variance_ratio_`로 확인
+
+
+# 딥러닝 (Ch 07) 
+## 인공 신경망 (Ch 07-1) <sup>```Week 06```</sup> 
+### 인공 신경망
+1. 이미지 분류에는 인공 신경망이 적합
+### 층(layer)
+1. 층 별 값(노드)의 단위인 뉴런(neuron) 또는 유닛(unit)
+2. 최초 데이터인 입력층(input layer)와 최종 z 값을 만드는 출력층(output layer)
+3. 가장 기본이 되는 밀집층(dense layer)과 양 쪽 뉴런이 모두 연결되어 있는 fully connected layer
+
+> tensorflow는 직접 GPU 연산을 하는 딥러닝 라이브러리, keras는 tensorflow의 고수준 API. tensorflow는 keras의 백엔드
+
+### one-hot encoding
+1. 타깃 데이터를, 일치하는 클래스만 1, 나머지를 모두 0인 배열로 만드는 것
+2. 0~3번째 중 2번째 클래스에 속하는 값은 `[0,0,1,0]`
+3. 다중 분류에서도 원-핫-인코딩 사용
+4. (계속) cross-entropy를 loss function으로 사용할 때, 해당 클래스에 대한 loss function값을 최대한 1에 가깝게 만들어야 함
+5.  텐서플로에서 `sparse_categorical_crossentropy`를 쓰면 원핫 인코딩을 하지 않아도 됨
+
+### 기본 코드
+1. 아래와 같은 형태
+2. `metrics`은 결과에 포함시킬 값 (직접적인 영향x)
+3. `fit(..., match_size=?)`로 미니배치 크기 지정 가능 (기본 32개)
+```
+from tensorflow import keras
+from sklearn.model_selection import train_test_split
+train_scaled, val_scaled, train_target, val_target = train_test_split(train_scaled, train_target, test_size=0.2, random_state=42)
+
+dense = keras.layers.Dense(10, activation='softmax', input_shape=(784,))
+model = keras.Sequential(dense)
+
+model.compile(loss='sparse_categorical_crossentropy', metrics='accuracy')
+model.fit(train_scaled, train_target, epochs=5)
+model.evaluate(val_scaled, val_target)
+```
+## 심층 신경망 (Ch 07-2) <sup>```Week 06```</sup> 
+### 심층 신경망
+1. 2개 이상의 층을 포함한 신경망
+### 은닉층 (hidden layer)
+1. 입력층과 출력층 사이에 있는 dense layer
+2. activation function을 통해 비선형적으로 값을 바꿔주며 역할을 함 (없이 쓸 경우 의미x)
+
+> 회귀는 출력층에 activation function을 적용하지 않고, 선형 방정식 계산을 그대로 출력한다.
+
+### Flatten
+1. 입력 차원을 1차원으로 바꿔주는 전처리 역할
+2. `keras.layers.Flatten`을 사용
+3. 실제 신경망에 기여하지 않아, 깊이 계산에서 제외
+
+> keras에서는 입력 데이터에 대한 전처리도 되도록 모델에 포함시키려 한다.
+
+### ReLU 함수
+1. max(0,z)인 함수
+2. sigmoid의 경우 좌우 끝으로 갈 수록 기울기가 감소하기 때문에, 여러 층을 거칠수록 학습을 느리게 만듦.
+
+
+### 기본 코드
+1. `keras.Sequential`에 dense 배열을 넣거나, 다음과 같이 `.add` method를 사용
+```
+model = keras.Sequential()
+model.add(keras.layers.Flatten(input_shape=(28,28)))
+model.add(keras.layers.Dense(100, activation='relu'))
+model.add(keras.layers.Dense(10, activation='softmax'))
+```
+2. `model.summary()`로 모델 정보 요약
+```
+Model: "sequential_4"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ flatten (Flatten)           (None, 784)               0         
+                                                                 
+ dense_5 (Dense)             (None, 100)               78500     
+                                                                 
+ dense_6 (Dense)             (None, 10)                1010      
+                                                                 
+=================================================================
+Total params: 79,510
+Trainable params: 79,510
+Non-trainable params: 0
+_________________________________________________________________
+```
+
+### 옵티마이저(Optimizer)
+1. `compile()`에서 사용하는 경사 하강법 알고리즘
+2. 기본 값으로 RMSprop을 적용
+3. `compile(optimizer=)`으로 사용
+### SGD
+1. Optimizer로 사용되는, 가장 기본적인 확률적 경사 하강법 
+2. `momentum`: 그라디언트 가속도 역할의 매개변수 (기본0, 통상 0.9 이상)
+3. `nseterov`: 네스테로프 모멤턴 최적화(가속 경사) 역할의 매개변수 (기본 Flase)  
+모멘텀 최적화를 2회 반복하여 구현되고, 보통 기본보다 더 나은 성능
+
+### 적응적 학습률
+1. 모델이 최적 값에 가까이 갈 수록 학습률을 낮춰 안정적으로 최적 값에 수렵하도록 하는 것
+2. 이를 사용하는 옵티마이저로는 RMSprop, Adagrad가 있음
+3. 모멘텀 최적화와 RMSprop의 장점을 합친 Adam도 있음
+4. 세 클래스 모두 `learning_rate` 기본값은 0.001
+
+### keras 응용
+1. 편의를 위해 activation function, optimizer 등을 다음과 문자열로 넣어 사용하고 있음
+```
+model.compile(optimzer='sgd', loss='...')
+```
+2. 엄연히 각 객체를 다음과 같이 만들어서 사용해야 하나, (1)과 같이 작성하여 객체를 자동 생성
+```
+sgd = keras.optimizers.SGD()
+sgd = keras.optimizers.SGD(learning_rate=0.1)
+model.compile(optimizer=sgd, loss=‘...’)
+```
+
+## 신경망 모델 훈련 (Ch 07-3) <sup>```Week 06```</sup> 
+### 손실곡선
+1. `fit()` 함수는 history 객체를 반환하는데, 모델 compile 시 `metric`에 작성한 값과 `loss`값을 key로 하는 배열을 반환한다.
+2. `fit(..., validation_data=(val_scaled, val_target))`로 검증 데이터를 전달 할 수 있다.
+3. 
+4. 이를 통해, 다음과 같은 코드로 손실곡선을 그릴 수 있다.
+```
+model.compile(loss='sparse_categorical_crossentropy', metrics='accuracy')
+history = model.fit(train_scaled, train_target, epochs=5, verbose=0)
+
+import matplotlib.pyplot as plt
+
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.legend('train', 'val')
+plt.show()
+```
+
+### 드롭아웃(dropout)
+1. 훈련 과정 중 층에 있는 뉴런을 랜덤하게 비활성화(출력 0)으로 하는 것
+2. 이를 통해 과적합을 방지하도록 하며, 일종의 규제
+3. 이를 두 개의 다른 모델을 일종의 앙상블한 형태로도 설명할 수 있음
+4. 다음과 같이 사용하며, 훈련 중에만 적용됨  
+`model.add(keras.layers.Dropout(0.3))` `0.3`은 비율
+
+### 콜백(Callback)
+1. 훈련 도중 작업을 수행하도록 하는 객체
+2. ModelCheckpoint 콜백은 최선의 검증 점수 모델을 저장
+3. `cb=keras.callbakcs.ModelCheckpoint(‘best.h5’)`로 콜백을 만들고, `model.fit(..., callbakcs=[cb])`로 설정
+
+### 조기종료(Early stopping)
+1. 일정 횟수 이상 검증 점수가 향상되지 않으면 훈련을 미리 종료하는 방법
+2. 과적합 또한 막아주기 때문에, 일종의 규제
+3. 다음과 같이 사용 `cb = keras.callbacks.EarlyStopping(patience=2, restore_best_weights=True)`
+
