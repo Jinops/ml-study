@@ -6,6 +6,8 @@
 |4|~05/02|앙상블, validation|트리 기반의 앙상블 모형을 학습하고, validation 세트의 의미와 활용에 대해 학습했다.|
 |5|~05/04|비지도 학습|target이 없이 학습을 하는 비지도 학습과 차원축소를 학습했다.|
 |6|~05/12|신경망|딥러닝과 심층 신경망 모델을 만드는 방법에 대해 학습했다.|
+|7|~05/16|CNN|이미지 분류 및 CNN에 대해 학습했다.|
+|8|~05/25|NLP|자연어 처리와 순환 신경망에 대해 학습했다.|
 
 # 회귀 (Ch 03)
 ## k-최근접 회귀 (Ch 03-1) <sup>```Week 01```</sup> 
@@ -538,3 +540,113 @@ model.save('model-whole.h5') #파라미터, 모델 구조
 model.load_weight('model-weights.h5') # 이미 만들어진 모델에 파라미터 불러오기 
 model = keras.models.load_model('model-whole.h5') # 새 모델
 ```
+
+---
+# CNN (Ch 08)
+- .
+---
+# NLP (Ch 09)
+## 순차 데이터와 순환 신경망 (ch 09-1) <sup>`Week 08`</sup>
+### 개요
+1. 텍스트 데이터는 순차 데이터이므로, 순서가 중요하고 이전에 입력한 데이터를 기억해야한다.
+2. 출력 데이터가 뉴런에 다시 순환되는 것을 순환 신경망, 앞으로만 전달되는 것을 피드포워드 신경망이라 한다.
+
+### 순환 신경망의 특징
+1. 샘플을 순환처리하는 한 단계를 timestep이라 한다. 
+2. layer를 cell, 출력을 은닉 상태라고 표현한다. 
+3. 일반적으로 hidden alyer의 활성화함수로 -1~1 범위를 가지는 hyperbolic tangent 함수를 사용한다.
+4. 뉴런 뿐 만아니라 timestep에 곱해지는 가중치도 존재한다.
+
+### 입출력
+1. 일반적으로 샘플(시퀀스)마다 2개 차원을 가진다.
+2. 시퀀스의 길이가 timestep(단어 개수)이다. 시퀀스에는 여러 단어가 들어있다.
+3. 입력이 순환층을 통과하면, 차원이 1차원 줄어든다. 
+
+### 출력 데이터
+1. 순환층 cell은 마지막 timestep에서 은닉 상태를 출력한다.
+2. cell이 여러 겹이라면, 마지막 셀을 제외한 이전 셀에서는 모든 timestep에서 은닉 상태를 출력한다.
+3. 마지막 셀에서 1차원 데이터를 출력하기 때문에, 최종 출력층(Fully-Connected) 이전에 Flatten할 필요가 없다.
+
+## 순환 신경망으로 IMDB 리뷰 분류하기 (ch09-2) <sup>`Week 08`</sup>
+### 자연어 처리(NLP)
+1. 음성 인식, 기계 번역, 감성 분석 등에 활용
+2. 훈련 데이터를 말뭉치(corpus)라고 한다.
+
+### 토큰
+1. 텍스트 자체를 신경망에 입력하지 않고, 숫자 데이터로 바꾼다.
+2. 전처리(소문자 변환, 구둣점 삭제 등) 및 공백을 기준으로 분리한 단어를 토큰이라 한다.
+3. 하나의 샘플은 여러 토큰으로 이뤄져있고, 1개 토큰이 하나의 timestep에 해당한다.
+4. 다음과 같은 예약어가 있다. 0: 패딩, 1: 문장의 시작, 2: 어휘사전에 없는 토큰
+
+### 패딩
+1. 패딩은 지정한 토큰 길이보다 샘플 내 토큰 길이가 길면 자르고, 짧으면 0으로 바꾸는 것이다.
+2. 보통 뒷부분에 유용한 정보가 있을것이라 기대하여, 앞부분을 자르거나 0으로 바꾼다.
+3. 다음과 같이 작성한다. (`maxlen` 길이)
+```
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+train_seq = pad_sequences(train_input, maxlen=100)
+```
+
+### 모델 코드
+1. 다음과 같이 모델을 만든다.
+```
+from tensorflow import keras
+model = keras.Sequential()
+model.add(keras.layers.SimpleRNN(8, input_shape=(100,500)))
+model.add(keras.layers.Dense(1, activation='sigmoid'))
+
+train_oh = keras.utils.to_categorical(train_seq)
+val_oh = keras.utils.to_categorical(val_seq)
+```
+2. `input_shape=(100,500)`은 토큰 길이가 100이며 500개의 단어라는 의미이다.
+3. 각 단어가 범주형이므로 `to_categorical`로 입력 값에 대한 one-hot encoding을 수행했다.
+4. 다음과 같이 모델을 훈련한다.
+```
+rmsprop = keras.optimizers.RMSprop(learning_rate=1e-4)
+model.compile(optimizer=rmsprop, loss='binary_crossentropy', metrics=['accuracy'])
+checkpoint_cb = keras.callbacks.ModelCheckpoint('best-simplernn-model.h5')
+early_stopping_cb = keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
+history = model.fit(train_oh, train_target, epochs=100, batch_size=64, validation_data=(val_oh, val_target), callbacks=[checkpoint_cb, early_stopping_cb])
+```
+### 단어 임베딩 (word embedding)
+1. 앞서 단어 종류를 on-hot encoding을 통해 범주형으로 나타내었는데, 입력 데이터가 매우 커진다는 단점이 있다.
+2. 단어 임베딩은 각 단어를 고정된 크기의 실수 벡터로 바꾼다.
+3. 이를 통해 입력 크기가 감소하고, 더 의미있는 정보를 포함한다.
+4. 다음과 같이 작성한다.  
+(`16` 임베딩 벡터의 크기)
+```
+model2 = keras.Sequential()
+model2.add(keras.layers.Embedding(500, 16, input_length=100))
+model2.add(keras.layers.SimpleRNN(8))
+model2.add(akeras.layers.Dense(1, activation='sigmoid'))
+```
+
+## LSTM과 GRU 셀 (ch 09-3) <sup>`Week 08`</sup>
+### 기존 순황층의 한계
+1. 기종 방식은 시퀀스가 지날수록 은닉 상태의 정보가 희석되어, 긴 시퀀스 학습이 어렵다.
+2. 이를 해결하기 위해 LSTM 및 GRU를 사용한다.
+
+### LSTM
+1. Long Short-Term Memory
+2. 은닉 상태를 만들 때 활성화 함수로 sigmoid를 사용한다.
+3. 셀 상태로부터 삭제 게이트(정보 제거), 입력 게이트(새로운 정보 추가), 출력 게이트(다음 은닉 상태로 출력) 총 세 군대의 곱셈 게이트가 존재한다.
+4. `keras.layers.LSTM(8, dropout=0.3)`로 작성한다.  
+### 셀 상태
+1. 셀 상태: 다음 층으로 전달되지 않고 LSTM 셀에서 순환만 되는 값이다.
+2. 입력과 은닉 상태에 가중곱을 하고 sigmoid를 통가시킨 뒤, 이전 timestep의 셀 상태와 곱해 새로운 셀 상태를 만든다.
+3. 또한 두 개의 셀(sigmoid, tanh으로 활성화) 결과를 곱한 후 이전 셀 상태와 더한다.
+4. 최종적으로 4개의 셀이 존재한다.
+
+### 순환층 클래스의 파라미터
+1. 순환층(`LSTM`, `SimpleRNN`) 클래스에 사용 가능한 파라미터들이 있다.
+2. `dropout`을 자체적으로 설정할 수 있다.
+```model.add(keras.layers.LSTM(8, dropout=0.3)```
+3. 순환층을 2개 이상 쌓을 경우, 앞쪽은 모든 timestep에 대한 은닉 상태를 출력하기 위해 다음과 같이 작성한다.
+```model.add(keras.layers.LSTM(,8 return_sequences=True)```
+
+
+### GRU
+1. Gated recurrent Unit의 약자로, LSTM의 간소화 버전
+2. LSTM보다 가중치가 적어 계산량이 적다.
+3. `keras.layers.GRU(8)`로 작성한다.
+
