@@ -554,7 +554,7 @@ model = keras.models.load_model('model-whole.h5') # 새 모델
 ### 순환 신경망의 특징
 1. 샘플을 순환처리하는 한 단계를 timestep이라 한다. 
 2. layer를 cell, 출력을 은닉 상태라고 표현한다. 
-3. 일반적으로 hidden alyer의 활성화함수로 -1~1 범위를 가지는 hyperbolic tangent 함수를 사용한다.
+3. 일반적으로 hidden layer의 활성화함수로 -1~1 범위를 가지는 hyperbolic tangent 함수를 사용한다.
 4. 뉴런 뿐 만아니라 timestep에 곱해지는 가중치도 존재한다.
 
 ### 입출력
@@ -622,28 +622,28 @@ model2.add(akeras.layers.Dense(1, activation='sigmoid'))
 ```
 
 ## LSTM과 GRU 셀 (ch 09-3) <sup>`Week 08`</sup>
-### 기존 순황층의 한계
+### 기존 순환층의 한계
 1. 기종 방식은 시퀀스가 지날수록 은닉 상태의 정보가 희석되어, 긴 시퀀스 학습이 어렵다.
 2. 이를 해결하기 위해 LSTM 및 GRU를 사용한다.
 
 ### LSTM
 1. Long Short-Term Memory
 2. 은닉 상태를 만들 때 활성화 함수로 sigmoid를 사용한다.
-3. 셀 상태로부터 삭제 게이트(정보 제거), 입력 게이트(새로운 정보 추가), 출력 게이트(다음 은닉 상태로 출력) 총 세 군대의 곱셈 게이트가 존재한다.
-4. `keras.layers.LSTM(8, dropout=0.3)`로 작성한다.  
+3. <b>셀 상태</b>로부터 삭제 게이트(정보 제거), 입력 게이트(새로운 정보 추가), 출력 게이트(다음 은닉 상태로 출력) 총 세 개의 곱셈 게이트가 존재한다.
+4. `keras.layers.LSTM(8, dropout=0.3)`로 작성한다.
+
 ### 셀 상태
-1. 셀 상태: 다음 층으로 전달되지 않고 LSTM 셀에서 순환만 되는 값이다.
-2. 입력과 은닉 상태에 가중곱을 하고 sigmoid를 통가시킨 뒤, 이전 timestep의 셀 상태와 곱해 새로운 셀 상태를 만든다.
-3. 또한 두 개의 셀(sigmoid, tanh으로 활성화) 결과를 곱한 후 이전 셀 상태와 더한다.
+1. 다음 층으로 전달되지 않고 LSTM 셀에서 순환만 되는 값이다.
+2. 입력과 은닉 상태에 가중곱을 하고 sigmoid를 통과시킨 뒤, 이전 timestep의 셀 상태와 곱해 새로운 셀 상태를 만든다.
+3. 또한 별도의 셀 두 개(sigmoid, tanh으로 활성화) 결과를 곱한 후 이전 셀 상태와 더한다.
 4. 최종적으로 4개의 셀이 존재한다.
 
 ### 순환층 클래스의 파라미터
 1. 순환층(`LSTM`, `SimpleRNN`) 클래스에 사용 가능한 파라미터들이 있다.
 2. `dropout`을 자체적으로 설정할 수 있다.
 ```model.add(keras.layers.LSTM(8, dropout=0.3)```
-3. 순환층을 2개 이상 쌓을 경우, 앞쪽은 모든 timestep에 대한 은닉 상태를 출력하기 위해 다음과 같이 작성한다.
+3. 순환층을 2개 이상 쌓을 경우, 앞쪽 층(셀)은 모든 timestep에 대한 은닉 상태를 출력하기 위해 다음과 같이 작성한다.
 ```model.add(keras.layers.LSTM(,8 return_sequences=True)```
-
 
 ### GRU
 1. Gated recurrent Unit의 약자로, LSTM의 간소화 버전
